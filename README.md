@@ -1,21 +1,19 @@
 # saws
-Search AWS CloudWatch logs
+Searches AWS CloudWatch Logs with Insights queries and flexible time ranges from your command line.
 
-
-NAME:
-        saws.py -- Search AWS CloudWatch logs
+    NAME
+        qaws.py -- Search AWS CloudWatch logs
     SYNOPSIS
-        saws.py [-g groups...] \
+        qaws.py [-g groups...] \
                 [-t starttime | starttime endtime] \
                 [-q query]
-                   
     DESCRIPTION
         -g --groups groups ...
             Specify 1 to N logging groups like "/ecs/someservice1"
         -t --time starttime | starttime endtime
             Specify starttime in history to more recent endtime in present.
             Possible formats for time specification is:
-                ISO time:                           "2000-01-01T00:00:00"
+                ISO time:           "2000-01-01T00:00:00"
                 Epoch in seconds:   "1590314700"
                 Time relative to Now:      
                     "1h"                    1 hour ago
@@ -29,14 +27,37 @@ NAME:
                 fields @timestamp, @message 
                 | filter @message like 'event' 
                 | limit 10"
-                
         - It can take few minutes (~2 minutes) until logs appears in CloudWatch and therefore fetching logs 
             with '-t "1m"' may not return any results
         - Even if you set '|limit 1' in --query then CloudWatch will anyway search over entire specified '-t "10d"' 
             history which can take lot of time
     EXAMPLES
-        saws.py \
-            --groups      "/ecs/someservice0" "/ecs/someservice1" "/ecs/someserviceN" \
+        qaws.py \
+            --groups      "/ecs/myservice0" \
             --time        "1h" \
+            --query       "fields @message"
+        qaws.py \
+            --groups      "/ecs/myservice0" "/ecs/myservice1" "/ecs/myservice2" \
+            --time        "1h 30m" \
+            --query       "fields @message"
+        qaws.py \
+            --groups      "/ecs/myservice0" \
+            --time        "1h" "30m" \
+            --query       "fields @timestamp @message | filter @message like 'event' | limit 15"
+        qaws.py \
+            --groups      "/ecs/myservice0" \
+            --time        "2020-05-24T00:00:00" "2020-05-24T12:00:00" \
+            --query       "fields @message | filter @message like 'event'"
+        qaws.py \
+            --groups      "/ecs/myservice0" \
+            --time        "1y" "2020-05-24T00:00:00" \
+            --query       "fields @message | filter @message like 'event'"
+        qaws.py \
+            --groups      "/ecs/myservice0" \
+            --time        "2020-05-24T00:00:00" "5h" \
             --query       "fields @message | filter @message like 'event' | limit 15"
-                    
+    
+    AUTHORS
+        Jiri Kacirek (kacirek.j@gmail.com) 2020
+    IMPLEMENTATION
+        Python 3.8
