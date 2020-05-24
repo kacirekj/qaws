@@ -5,11 +5,12 @@ import sys
 
 help = '''
 NAME
-    qaws.py -- Query AWS CloudWatch logs
+    qaws -- Query AWS CloudWatch logs
 SYNOPSIS
-    qaws.py [-g groups...] \
-            [-t starttime | starttime endtime] \
+    qaws    [-g groups...]
+            [-t starttime | starttime endtime]
             [-q query]
+            [-s recordseparator]
 DESCRIPTION
     -g --groups groups ...
         Specify 1 to N logging groups like "/ecs/someservice1"
@@ -30,72 +31,43 @@ DESCRIPTION
             fields @timestamp, @message 
             | filter @message like 'event' 
             | limit 10"
+    -s --separator recordseparator
+        Optional parameter. Records will be separated by recordseparator symbol.
+        
     - It can take few minutes (~2 minutes) until logs appears in CloudWatch and therefore fetching logs 
         with '-t "1m"' may not return any results
-    - Even if you set '|limit 1' in --query then CloudWatch will anyway search over entire specified '-t "10d"' 
+    - Even if you set '|limit 1' in --query then CloudWatch will anyway search over entire specified e.g. '-t "10d"' 
         history which can take lot of time
 EXAMPLES
-    qaws.py \
-        --groups      "/ecs/myservice0" \
-        --time        "1h" \
+    qaws
+        --groups      "/ecs/myservice0"
+        --time        "1h"
         --query       "fields @message"
-    qaws.py \
-        --groups      "/ecs/myservice0" "/ecs/myservice1" "/ecs/myservice2" \
-        --time        "1h 30m" \
+    qaws
+        --groups      "/ecs/myservice0" "/ecs/myservice1" "/ecs/myservice2"
+        --time        "1h 30m"
         --query       "fields @message"
-    qaws.py \
-        --groups      "/ecs/myservice0" \
-        --time        "1h" "30m" \
+    qaws
+        --groups      "/ecs/myservice0"
+        --time        "5h" "1h"
         --query       "fields @timestamp @message | filter @message like 'event' | limit 15"
-    qaws.py \
-        --groups      "/ecs/myservice0" \
-        --time        "2020-05-24T00:00:00" "2020-05-24T12:00:00" \
+    qaws
+        --groups      "/ecs/myservice0"
+        --time        "2020-05-24T00:00:00" "2020-05-24T12:00:00"
         --query       "fields @message | filter @message like 'event'"
-    qaws.py \
-        --groups      "/ecs/myservice0" \
-        --time        "1y" "2020-05-24T00:00:00" \
+    qaws
+        --groups      "/ecs/myservice0"
+        --time        "1y" "2020-05-24T00:00:00"
         --query       "fields @message | filter @message like 'event'"
-    qaws.py \
-        --groups      "/ecs/myservice0" \
-        --time        "2020-05-24T00:00:00" "5h" \
+    qaws
+        --groups      "/ecs/myservice0"
+        --time        "2020-05-24T00:00:00" "5h"
         --query       "fields @message | filter @message like 'event' | limit 15"
-
 AUTHORS
     Jiri Kacirek (kacirek.j@gmail.com) 2020
 IMPLEMENTATION
     Python 3.8
 '''
-
-
-argv = sys.argv
-if len(argv) < 7:
-    print(help)
-
-
-# Parse input arguments
-
-
-arg_groups_names = []
-arg_time = []
-arg_query = []
-_switch_pointer = []
-
-for idx, item in enumerate(argv):
-    if item in ['--groups', '-g']:
-        _switch_pointer = arg_groups_names
-        continue
-    if item in ['--time', '-t']:
-        _switch_pointer = arg_time
-        continue
-    if item in ['--query', '-q']:
-        _switch_pointer = arg_query
-        continue
-
-    _switch_pointer.append(item)
-
-
-# Parse time
-
 
 class TimeParser:
 
@@ -154,56 +126,93 @@ class TimeParser:
         return self.today - timedelta(seconds=seconds)
 
 
-client = boto3.client('logs')
+def main(argv=None):
 
-timeparser = TimeParser()
-arg_time_start = arg_time[0]
-try:
-    arg_time_end = arg_time[1]
-except:
-    arg_time_end = None
+    argv = sys.argv
+    if len(argv) < 7:
+        print(help)
+        exit()
 
-time_start = timeparser.parse(arg_time_start, else_return=timeparser.today)
-time_end = timeparser.parse(arg_time_end, else_return=timeparser.today)
+    # Parse input arguments
 
-print(f'Search for logs from {time_start.isoformat()} to {time_end.isoformat()}.')
+    arg_groups_names = []
+    arg_time = []
+    arg_query = []
+    arg_separator = []
+    _switch_pointer = []
+
+    for idx, item in enumerate(argv):
+        if item in ['--groups', '-g']:
+            _switch_pointer = arg_groups_names
+            continue
+        if item in ['--time', '-t']:
+            _switch_pointer = arg_time
+            continue
+        if item in ['--query', '-q']:
+            _switch_pointer = arg_query
+            continue
+        if item in ['--separator', '-s']:
+            _switch_pointer = arg_separator
+            continue
+
+        _switch_pointer.append(item)
 
 
-# Execute AWS Query
+    # Parse time
 
+    client = boto3.client('logs')
 
-start_query_response = client.start_query(
-    logGroupNames=arg_groups_names,
-    startTime=int(time_start.timestamp()),
-    endTime=int(time_end.timestamp()),
-    queryString=arg_query[0],
-)
+    timeparser = TimeParser()
+    arg_time_start = arg_time[0]
+    try:
+        arg_time_end = arg_time[1]
+    except:
+        arg_time_end = None
 
-query_id = start_query_response['queryId']
+    time_start = timeparser.parse(arg_time_start, else_return=timeparser.today)
+    time_end = timeparser.parse(arg_time_end, else_return=timeparser.today)
 
+    print(f'Search for logs from {time_start.isoformat()} to {time_end.isoformat()}.')
 
-# Wait for query result
+    # Execute AWS Query
 
-
-response = None
-
-while response == None or response['status'] == 'Running':
-    print('Waiting for query to complete ...')
-    time.sleep(3)
-    response = client.get_query_results(
-        queryId=query_id
+    start_query_response = client.start_query(
+        logGroupNames=arg_groups_names,
+        startTime=int(time_start.timestamp()),
+        endTime=int(time_end.timestamp()),
+        queryString=arg_query[0],
     )
 
+    query_id = start_query_response['queryId']
 
-# Print query result
-statistics = response["statistics"]
-print(f'Records matched {statistics["recordsMatched"]}, Records scanned: {statistics["recordsScanned"]}')
+    # Wait for query result
 
-for res in response['results']:
-    line = []
-    for r in res:
-        if '@ptr' not in r['field']:
-            line.append(r['value'].strip())
+    response = None
 
-    line = ', '.join(line)
-    print(line)
+    while response == None or response['status'] == 'Running':
+        print('Waiting for query to complete ...')
+        time.sleep(3)
+        response = client.get_query_results(
+            queryId=query_id
+        )
+
+    # Print query result
+    statistics = response["statistics"]
+    print(f'Records matched {statistics["recordsMatched"]}, Records scanned: {statistics["recordsScanned"]}')
+
+    for res in response['results']:
+        line = []
+        for r in res:
+            if '@ptr' not in r['field']:
+                line.append(r['value'].strip())
+
+        line = ', '.join(line)
+        if len(arg_separator) != 0:
+            line = arg_separator[0] + line
+        print(line)
+
+    return 0
+
+
+if __name__ == "__main__":
+    main()

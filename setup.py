@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="qaws",
-    version="0.0.1",
+    version="0.2",
     author="Jiri Kacirek",
     author_email="kacirek.j@gmail.com",
     description="Search AWS CloudWatch Logs with Insights queries and flexible time ranges from your command line.",
@@ -19,4 +19,10 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
+    entry_points={
+        'console_scripts': ['qaws=qaws.qaws:main'],
+    },
+    install_requires=[
+        'boto3'
+    ],
 )
