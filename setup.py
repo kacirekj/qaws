@@ -1,11 +1,13 @@
 import setuptools
 
+VERSION = "0.3.1"
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="qaws",
-    version="0.2",
+    version=VERSION,
     author="Jiri Kacirek",
     author_email="kacirek.j@gmail.com",
     description="Search AWS CloudWatch Logs with Insights queries and flexible time ranges from your command line.",
