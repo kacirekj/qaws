@@ -2,7 +2,9 @@
 Command line utility for search in AWS CloudWatch Logs with Insights queries and flexible time ranges.
 
 1. Install latest via pip: https://pypi.org/project/qaws.
-2. Execute "qaws" in your command line.
+2. You need Python 3.8 (you can try lower version - not tested)
+3. Ensure you have you Python's Bin directory in $PATH
+4. Execute "qaws" in your command line.
 
 ## Status
 
