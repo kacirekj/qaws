@@ -15,6 +15,9 @@ Command line utility for search in AWS CloudWatch Logs with Insights queries and
 3. qaws could totaly neglect switchers like '-g', because each group starts with "/" and each query contains "fiELDs"
 4. So the result could be: 'qaws --groups | qaws "1y" "6mo" "fields @message"'
 
+
+## Manual
+
 ```
 NAME
     qaws -- Query AWS CloudWatch logs
