@@ -4,6 +4,16 @@ Command line utility for search in AWS CloudWatch Logs with Insights queries and
 1. Install latest via pip: https://pypi.org/project/qaws.
 2. Execute "qaws" in your command line.
 
+## Status
+
+### Versions
+- Version 0.3 is stable, used by me on daily bases
+
+### Improvement proposals
+1. qaws should be able to list all groups in AWS
+2. qaws should be able to take group list as stdin parameter
+3. qaws could totaly neglect switchers like '-g', because each group starts with "/" and each query contains "fiELDs"
+4. So the result could be: 'qaws --groups | qaws "1y" "6mo" "fields @message"'
 
 ```
 NAME
