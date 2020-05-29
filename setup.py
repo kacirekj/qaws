@@ -1,6 +1,6 @@
 import setuptools
 
-VERSION = "0.3.1"
+VERSION = "0.4.0"
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -10,7 +10,7 @@ setuptools.setup(
     version=VERSION,
     author="Jiri Kacirek",
     author_email="kacirek.j@gmail.com",
-    description="Search AWS CloudWatch Logs with Insights queries and flexible time ranges from your command line.",
+    description="Search AWS CloudWatch Logs with Insights queries, flexible time ranges and wildcards in log group names from your command line.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/kacirekj/saws",

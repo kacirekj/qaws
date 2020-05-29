@@ -27,10 +27,10 @@ SYNOPSIS
     qaws    [-g groups...]
             [-t starttime | starttime endtime]
             [-q query]
-            [-s recordseparator]
 DESCRIPTION
     -g --groups groups ...
-        Specify 1 to N logging groups like "/ecs/someservice1"
+        Specify 1 to N logging groups like "/ecs/someservice1". Wildcard * can be used like "*ecs*some*1". 
+        If you specify only -g flag then it will print all groups in CloudWatch
     -t --time starttime | starttime endtime
         Specify starttime in history to more recent endtime in present.
         Possible formats for time specification is:
@@ -48,38 +48,44 @@ DESCRIPTION
             fields @timestamp, @message 
             | filter @message like 'event' 
             | limit 10"
-    -s --separator recordseparator
-        Optional parameter. Records will be separated by recordseparator symbol.
         
     - It can take few minutes (~2 minutes) until logs appears in CloudWatch and therefore fetching logs 
         with '-t "1m"' may not return any results
     - Even if you set '|limit 1' in --query then CloudWatch will anyway search over entire specified e.g. '-t "10d"' 
         history which can take lot of time
+    - When you use wildcard * in group names then it will take longer to finish query as all the log group names has to be fetched from AWS
 EXAMPLES
-    qaws
-        --groups      "/ecs/myservice0"
-        --time        "1h"
-        --query       "fields @message"
-    qaws
-        --groups      "/ecs/myservice0" "/ecs/myservice1" "/ecs/myservice2"
-        --time        "1h 30m"
-        --query       "fields @message"
-    qaws
-        --groups      "/ecs/myservice0"
-        --time        "5h" "1h"
-        --query       "fields @timestamp @message | filter @message like 'event' | limit 15"
-    qaws
-        --groups      "/ecs/myservice0"
-        --time        "2020-05-24T00:00:00" "2020-05-24T12:00:00"
-        --query       "fields @message | filter @message like 'event'"
-    qaws
-        --groups      "/ecs/myservice0"
-        --time        "1y" "2020-05-24T00:00:00"
-        --query       "fields @message | filter @message like 'event'"
-    qaws
-        --groups      "/ecs/myservice0"
-        --time        "2020-05-24T00:00:00" "5h"
-        --query       "fields @message | filter @message like 'event' | limit 15"
+    - Prints all log groups in CloudWatch:
+        qaws \
+            --groups
+    - Prints all log groups in CloudWatch matching wildcard:
+        qaws \
+            --groups "*service*"
+    - Basic querying:
+        qaws \
+            --groups      "/ecs/myservice0" \
+            --time        "1h" \
+            --query       "fields @message"
+    - Multiple groups specified with one containing wildcard:
+        qaws \ 
+            --groups      "*ecs*service0" "/ecs/myservice1" "/ecs/myservice2" \
+            --time        "1d 1h 30m 30s" \
+            --query       "fields @message"
+    - Query logs in between past 5 and 1 hour:
+        qaws \
+            --groups      "/ecs/*" \
+            --time        "5h" "1h" \
+            --query       "fields @timestamp @message | filter @message like 'event' | limit 15"
+    - Query logs in between two ISO dates:
+        qaws \
+            --groups      "/ecs/*" \
+            --time        "2020-05-24T00:00:00" "2020-05-24T12:00:00" \
+            --query       "fields @message | filter @message like 'event'"
+    - Combine relative time with ISO date:
+        qaws \
+            --groups      "/ecs/*" \
+            --time        "1y" "2020-05-24T00:00:00" \
+            --query       "fields @message | filter @message like 'event'"
 AUTHORS
     Jiri Kacirek (kacirek.j@gmail.com) 2020
 IMPLEMENTATION
