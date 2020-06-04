@@ -13,6 +13,8 @@ SYNOPSIS
             [-t starttime | starttime endtime]
             [-q query]
 DESCRIPTION
+    -h --help
+        Get this manual.
     -g --groups groups ...
         Specify 1 to N logging groups like "/ecs/someservice1". Wildcard * can be used like "*ecs*some*1". 
         If you specify only -g flag then it will print all groups in CloudWatch
@@ -54,23 +56,23 @@ EXAMPLES
     - Multiple groups specified with one containing wildcard:
         qaws \\ 
             --groups      "*ecs*service0" "/ecs/myservice1" "/ecs/myservice2" \\
-            --time        "1d 1h 30m 30s" \\
+            --time        "1d 1h 30m" \\
             --query       "fields @message"
-    - Query logs in between past 5 and 1 hour:
+    - Query logs in between past 5 and 1 hour with wildcard:
         qaws \\
             --groups      "/ecs/*" \\
             --time        "5h" "1h" \\
-            --query       "fields @timestamp @message | filter @message like 'event' | limit 15"
+            --query       "fields @timestamp @message | filter @message like 'event' | limit 5000"
     - Query logs in between two ISO dates:
         qaws \\
             --groups      "/ecs/*" \\
             --time        "2020-05-24T00:00:00" "2020-05-24T12:00:00" \\
-            --query       "fields @message | filter @message like 'event'"
+            --query       "fields @message | filter @message like 'event' | limit 5000"
     - Combine relative time with ISO date:
         qaws \\
             --groups      "/ecs/*" \\
             --time        "1y" "2020-05-24T00:00:00" \\
-            --query       "fields @message | filter @message like 'event'"
+            --query       "fields @message | filter @message like 'event' | limit 5000"
 AUTHORS
     Jiri Kacirek (kacirek.j@gmail.com) 2020
 IMPLEMENTATION
@@ -175,6 +177,9 @@ def main(argv=None):
     _switch_pointer = []
 
     for idx, item in enumerate(argv):
+        if item in ['--help', '-h']:
+            print(help)
+            return 0
         if item in ['--groups', '-g']:
             _switch_pointer = arg_log_group_names
             continue
